@@ -1,0 +1,7 @@
+schema = 1
+id = "vimnav"
+name = "omp vimnav"
+version = "0.3.0"
+description = "Opens the tern-omp-vimnav thread navigator in the focused omp pane (sends omp's Alt+K)."
+window = "window.luau"
+styles = ["vimnav.css"]

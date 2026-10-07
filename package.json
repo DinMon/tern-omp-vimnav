@@ -1,0 +1,14 @@
+{
+	"name": "tern-omp-vimnav",
+	"version": "0.3.0",
+	"private": true,
+	"description": "Vim-style keyboard navigation of the omp chat thread in the Tern terminal",
+	"license": "MIT",
+	"keywords": ["omp", "oh-my-pi", "omp-plugin", "tern", "vim", "keyboard-navigation"],
+	"homepage": "https://github.com/DinMon/tern-omp-vimnav#readme",
+	"repository": { "type": "git", "url": "git+https://github.com/DinMon/tern-omp-vimnav.git" },
+	"bugs": { "url": "https://github.com/DinMon/tern-omp-vimnav/issues" },
+	"type": "module",
+	"files": ["index.ts", "src", "tern", "README.md", "LICENSE"],
+	"omp": { "extensions": ["./index.ts"] }
+}

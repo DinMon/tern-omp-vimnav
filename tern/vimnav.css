@@ -1,0 +1,767 @@
+/* vimnav transcript decorations, shipped via plugin.toml styles. */
+
+/* Tokens: declared in the region so omp's palette accent resolves locally. The wash and rail are opaque mixes with the
+   page (--tv-bg), not alpha: a range's washes overlap where they join, and opaque paints overlap without a seam. */
+.sf-region {
+	--vn-accent: var(--sf-accent, var(--accent));
+	--vn-page: var(--tv-bg);
+	--vn-wash: color-mix(in srgb, var(--vn-accent) 8%, var(--vn-page));
+	--vn-wash-strong: color-mix(in srgb, var(--vn-accent) 13%, var(--vn-page));
+	--vn-sel: color-mix(in srgb, var(--vn-accent) 22%, transparent);
+	--vn-rail: color-mix(in oklab, var(--vn-accent) 62%, var(--t1));
+	--vn-rail-dim: color-mix(in oklab, var(--vn-rail) 45%, var(--vn-page));
+	--vn-ring: color-mix(in srgb, var(--vn-accent) 40%, transparent);
+	--vn-bleed-x: 14px;
+	--vn-bleed-y: 10px;
+	--vn-radius: 12px;
+	--vn-motion: 140ms;
+}
+[data-theme="dark"] .sf-region {
+	--vn-wash: color-mix(in srgb, var(--vn-accent) 12%, var(--vn-page));
+	--vn-wash-strong: color-mix(in srgb, var(--vn-accent) 18%, var(--vn-page));
+	--vn-sel: color-mix(in srgb, var(--vn-accent) 30%, transparent);
+	--vn-ring: color-mix(in srgb, var(--vn-accent) 48%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+	.sf-region {
+		--vn-motion: 0ms;
+	}
+}
+
+/* Cursor: invisible sibling markers carry the cursor/range state; the transcript blocks stay untouched.
+   TEXT wells own their aria state because their preceding transcript block is hidden. */
+/* Moves reveal the cursor block through its markers: the end marker (bottom edge) then the at-marker (top edge).
+   Tern cannot reveal an empty (void, display:none) node, so both are boxes whose flex gap is cancelled and that add no
+   height: the end marker is 0px tall on the block's bottom edge; the at-marker is a 48px box ending on its top edge,
+   pulled up by its own height, so a move up stops with that much context above the block (the wash bleeds 10px above
+   it, and pane chrome can overlay the top). It overlaps the previous block, hence no pointer events. Each chat layout
+   has its own main gap (reader's is a literal 20px in Tern's sheet), so the cancelling margin must match it exactly
+   or every block past a marker moves. */
+[data-role="omp.vimnav.at"],
+[data-role="omp.vimnav.end"] {
+	display: block !important;
+	height: 0 !important;
+	margin-top: 0 !important;
+	margin-bottom: 0 !important;
+}
+[data-role="omp.vimnav.at"] {
+	height: 48px !important;
+	margin-top: -48px !important;
+	pointer-events: none;
+}
+.sf-main > [data-role="omp.vimnav.at"] {
+	margin-bottom: calc(0px - var(--sf-block-gap)) !important;
+}
+.sf-main > [data-role="omp.vimnav.end"] {
+	margin-top: calc(0px - var(--sf-block-gap)) !important;
+}
+.sf-chat-reader.sf-main > [data-role="omp.vimnav.at"] {
+	margin-bottom: -20px !important;
+}
+.sf-chat-reader.sf-main > [data-role="omp.vimnav.end"] {
+	margin-top: -20px !important;
+}
+.sf-chat-console.sf-main > [data-role="omp.vimnav.at"] {
+	margin-bottom: calc(0px - var(--cn-gap)) !important;
+}
+.sf-chat-console.sf-main > [data-role="omp.vimnav.end"] {
+	margin-top: calc(0px - var(--cn-gap)) !important;
+}
+/* A marker before the transcript's first block would give a first user bubble Tern's 8px "not first" margin. */
+[data-role="omp.vimnav.at"]:first-child + .sf-card[data-role="omp.user"] {
+	margin-top: 0 !important;
+}
+[data-role="omp.vimnav.at"][aria-label^="vimnav"] + *,
+[data-role="omp.vimnav.text"][aria-label^="vimnav"] {
+	position: relative;
+	isolation: isolate;
+}
+[data-role="omp.vimnav.at"][aria-label*=" cur"] + *::before,
+[data-role="omp.vimnav.at"][aria-label*=" rng"] + *::before,
+[data-role="omp.vimnav.text"][aria-label*=" cur"]::before,
+[data-role="omp.vimnav.text"][aria-label*=" rng"]::before {
+	content: "";
+	position: absolute;
+	top: calc(0px - var(--vn-bleed-y));
+	bottom: calc(0px - var(--vn-bleed-y));
+	left: calc(0px - var(--vn-bleed-x));
+	right: calc(0px - var(--vn-bleed-x));
+	border-radius: var(--vn-radius);
+	background: var(--vn-wash);
+	z-index: -1;
+	pointer-events: none;
+	transition: background-color var(--vn-motion) ease;
+}
+/* A range is one tint. The space between blocks varies (16px, 20px before a notice, 24px before a user turn), so
+   instead of reaching up by it, every block but the last reaches 32px down under the next block, whose own wash
+   (painted later, same opaque colour) covers the overlap. */
+[data-role="omp.vimnav.at"][aria-label*=" rng-first"] + *::before,
+[data-role="omp.vimnav.at"][aria-label*=" rng-mid"] + *::before,
+[data-role="omp.vimnav.text"][aria-label*=" rng-first"]::before,
+[data-role="omp.vimnav.text"][aria-label*=" rng-mid"]::before {
+	bottom: -32px;
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+}
+[data-role="omp.vimnav.at"][aria-label*=" rng-mid"] + *::before,
+[data-role="omp.vimnav.at"][aria-label*=" rng-last"] + *::before,
+[data-role="omp.vimnav.text"][aria-label*=" rng-mid"]::before,
+[data-role="omp.vimnav.text"][aria-label*=" rng-last"]::before {
+	top: 0;
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+}
+/* Rails reach down with dim shadows so a cursor at the top of a range stays full strength on its own box only. */
+[data-role="omp.vimnav.at"][aria-label*=" cur"] + *::after,
+[data-role="omp.vimnav.at"][aria-label*=" rng"] + *::after,
+[data-role="omp.vimnav.text"][aria-label*=" cur"]::after,
+[data-role="omp.vimnav.text"][aria-label*=" rng"]::after {
+	content: "";
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: -22px;
+	width: 3px;
+	border-radius: 1.5px;
+	background: var(--vn-rail-dim);
+	pointer-events: none;
+	transition: background-color var(--vn-motion) ease;
+}
+[data-role="omp.vimnav.at"][aria-label*=" rng"] + *::after,
+[data-role="omp.vimnav.text"][aria-label*=" rng"]::after {
+	border-radius: 0;
+}
+[data-role="omp.vimnav.at"][aria-label*=" rng-first"] + *::after,
+[data-role="omp.vimnav.at"][aria-label*=" rng-mid"] + *::after,
+[data-role="omp.vimnav.text"][aria-label*=" rng-first"]::after,
+[data-role="omp.vimnav.text"][aria-label*=" rng-mid"]::after {
+	box-shadow:
+		0 16px 0 var(--vn-rail-dim),
+		0 32px 0 var(--vn-rail-dim);
+}
+[data-role="omp.vimnav.at"][aria-label*=" cur"] + *::after,
+[data-role="omp.vimnav.text"][aria-label*=" cur"]::after {
+	background: var(--vn-rail);
+}
+/* TEXT hides the block behind its well, but never with display:none: Tern's markdown virtualiser, run by any scroll
+   meanwhile, then sees the block as off-screen and unmounts its content, and a block shown again without a scroll
+   comes back at full height with nothing mounted (an empty thought). Kept laid out at zero height, clipped and
+   invisible, its content stays where the virtualiser sees it. Its flex gap is cancelled as the markers' is. */
+[data-role="omp.vimnav.hide"] + * {
+	visibility: hidden !important;
+	position: relative !important;
+	height: 0 !important;
+	min-height: 0 !important;
+	padding: 0 !important;
+	border: 0 !important;
+	margin: 0 !important;
+	overflow: hidden !important;
+}
+.sf-main > [data-role="omp.vimnav.hide"] + * {
+	margin-bottom: calc(0px - var(--sf-block-gap)) !important;
+}
+.sf-chat-reader.sf-main > [data-role="omp.vimnav.hide"] + * {
+	margin-bottom: -20px !important;
+}
+.sf-chat-console.sf-main > [data-role="omp.vimnav.hide"] + * {
+	margin-bottom: calc(0px - var(--cn-gap)) !important;
+}
+
+/* TEXT well.
+   Well-local bright slots: 9 = faint gutter, 10 = current number / accent text,
+   11 = caret fill, 12 = caret text, 13 = VISUAL cells.
+   Slots 14/15 are reserved for search. Content bright foregrounds fold into slots 1–7. */
+.sf-region {
+	--vn-sel-row: color-mix(in srgb, var(--vn-accent) 22%, var(--code-bg));
+}
+[data-theme="dark"] .sf-region {
+	--vn-sel-row: color-mix(in srgb, var(--vn-accent) 30%, var(--code-bg));
+}
+[data-role="omp.vimnav.well"] {
+	--ansi9: var(--t4);
+	--ansi10: color-mix(in oklab, var(--vn-accent) 50%, var(--t1));
+	--ansi11: var(--vn-rail);
+	--ansi12: var(--tv-bg);
+	--ansi13: color-mix(in srgb, var(--vn-accent) 22%, var(--code-bg));
+	border-radius: var(--vn-radius);
+	background: var(--code-bg);
+	box-shadow: inset 0 0 0 1px var(--l2);
+	overflow: hidden;
+}
+[data-theme="dark"] [data-role="omp.vimnav.well"] {
+	--ansi10: color-mix(in oklab, var(--vn-accent) 70%, var(--t1));
+	--ansi13: color-mix(in srgb, var(--vn-accent) 30%, var(--code-bg));
+}
+[data-role="omp.vimnav.well-head"] {
+	height: 32px;
+	flex-shrink: 0 !important;
+	padding: 0 12px;
+	box-shadow: inset 0 -1px 0 var(--l1);
+	font: 12px/1 var(--sans);
+	color: var(--t3);
+	white-space: nowrap;
+}
+[data-role="omp.vimnav.chip"] {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 20px;
+	padding: 0 8px 0 7px;
+	border-radius: 999px;
+	font: 600 11px/1 var(--sans);
+	letter-spacing: 0.02em;
+	color: var(--ansi10);
+	background: color-mix(in srgb, var(--vn-accent) 10%, transparent);
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vn-accent) 24%, transparent);
+	white-space: nowrap;
+	flex: none !important;
+}
+[data-role="omp.vimnav.chip"]::before {
+	content: "";
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--vn-accent);
+}
+[data-role="omp.vimnav.kind"] {
+	font-weight: 500;
+	color: var(--t1);
+}
+[data-role="omp.vimnav.pos"] {
+	font: 11.5px/1 var(--mono);
+	font-variant-numeric: tabular-nums;
+	color: var(--t3);
+	white-space: nowrap;
+}
+[data-role="omp.vimnav.rows"] {
+	padding: 10px 0;
+}
+[data-role="omp.vimnav.row"],
+[data-role^="omp.vimnav.row."] {
+	padding: 0 12px;
+}
+/* The cursor row is marked by its accent line number and the caret only: a whole-row tint means a V-LINE selection. */
+[data-role="omp.vimnav.row.sel"],
+[data-role="omp.vimnav.row.cur.sel"] {
+	background: var(--vn-sel-row);
+}
+
+/* Hint tags: absolute ink tags never change the transcript's boxes. */
+.sf-region {
+	--vn-tag-bg: var(--t1);
+	--vn-tag-fg: var(--tv-bg);
+	--vn-tag-shadow:
+		0 1px 2px rgba(0, 0, 0, 0.18),
+		0 6px 14px -6px rgba(0, 0, 0, 0.42);
+}
+[data-theme="dark"] .sf-region {
+	--vn-tag-shadow:
+		0 1px 2px rgba(0, 0, 0, 0.5),
+		0 6px 14px -6px rgba(0, 0, 0, 0.85);
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + *,
+[data-role="omp.vimnav.hint-anchor"] {
+	position: relative;
+}
+[data-role^="omp.vimnav.hint"]:not([data-role="omp.vimnav.hint-anchor"]),
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	border-radius: 5px;
+	background: var(--vn-tag-bg);
+	color: var(--vn-tag-fg);
+	box-shadow: var(--vn-tag-shadow);
+	font: 600 10.5px/1 var(--mono);
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+	z-index: 3;
+	pointer-events: none;
+}
+[data-role^="omp.vimnav.hint"]:not([data-role="omp.vimnav.hint-anchor"]) {
+	position: absolute !important;
+}
+[data-role="omp.vimnav.hint"] {
+	top: -6px;
+	left: 0;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins {
+	display: inline-block;
+	position: relative !important;
+	vertical-align: top;
+	top: -4px;
+	margin-right: -18px;
+	text-decoration: none;
+	font-style: normal;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-num {
+	margin-right: -23px;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-num.sf-t-path {
+	margin-right: -29px;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-strong {
+	top: 0;
+	left: -32px;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-strong.sf-t-num {
+	left: -37px;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-strong.sf-t-num.sf-t-path {
+	left: -43px;
+}
+[data-role^="omp.vimnav.hint.block"] {
+	right: calc(100% + 14px);
+	top: 3px;
+	left: auto;
+	transform: none;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + [data-role="omp.user"] [data-role^="omp.vimnav.hint.block"] {
+	top: 13px;
+}
+[data-role="omp.vimnav.hint.block.cur"],
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-strong.sf-t-accent {
+	background: var(--vn-rail);
+	color: var(--tv-bg);
+}
+[data-role="omp.vimnav.hint.code"] {
+	top: 7px;
+	right: 60px;
+	left: auto;
+}
+[data-role^="omp.vimnav.hint"] .sf-t-em,
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-em {
+	font-style: normal;
+	font-weight: 400;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-em {
+	min-width: 0;
+	padding: 0 0 0 5px;
+	border-radius: 5px 0 0 5px;
+	margin-right: -11px;
+	box-shadow: none;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-em.sf-t-num {
+	margin-right: -18px;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-em.sf-t-num.sf-t-path {
+	margin-right: -24px;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-strong.sf-t-em {
+	left: -32px;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-strong.sf-t-em.sf-t-muted {
+	left: -37px;
+	color: var(--vn-tag-fg);
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-strong.sf-t-em.sf-t-muted.sf-t-dim {
+	left: -43px;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-t-key.sf-t-ins.sf-t-strong.sf-t-em.sf-t-accent {
+	color: var(--tv-bg);
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + * .sf-md .md .code-head {
+	opacity: 1;
+	visibility: visible;
+}
+/* An output anchor preserves the reader's direct-child well styling on its original node. */
+.sf-chat-reader .sf-tool-body > [data-role="omp.vimnav.hint-anchor"] > :is(.sf-code, .sf-diff, .sf-ansi) {
+	border-radius: 10px;
+	background: var(--code-bg);
+	box-shadow: inset 0 0 0 1px var(--l1);
+}
+.sf-chat-reader .sf-tool-body > [data-role="omp.vimnav.hint-anchor"] > .sf-code > .sf-code-body {
+	padding: 8px 12px;
+}
+.sf-chat-reader .sf-tool-body > [data-role="omp.vimnav.hint-anchor"] > .sf-diff > .sf-diff-body {
+	padding: 4px 0;
+}
+.sf-chat-reader .sf-tool-body > [data-role="omp.vimnav.hint-anchor"] > .sf-ansi {
+	padding: 8px 12px;
+}
+/* Tool tags live in the head: the body's clamp clips even root-positioned child tags. */
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line {
+	overflow: visible;
+	min-width: 0;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge:is([data-tone="neutral"], [data-tone="accent"], [data-tone="pending"], [data-tone="error"]),
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="neutral"] + .sf-badge:is([data-tone="info"], [data-tone="muted"]),
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="accent"] + .sf-badge:is([data-tone="info"], [data-tone="muted"]) {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 5px;
+	border: 0;
+	border-radius: 5px;
+	background: var(--vn-tag-bg);
+	color: var(--vn-tag-fg);
+	box-shadow: var(--vn-tag-shadow);
+	font: 600 10.5px/1 var(--mono);
+	letter-spacing: 0.02em;
+	white-space: nowrap;
+	position: absolute !important;
+	top: 3px;
+	z-index: 3;
+	pointer-events: none;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge:is([data-tone="neutral"], [data-tone="accent"]) {
+	right: calc(100% + 14px);
+	left: auto;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="accent"] {
+	background: var(--vn-rail);
+	color: var(--tv-bg);
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="pending"] {
+	left: 20px;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="error"] {
+	left: 42px;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="error"] + .sf-badge[data-tone="pending"],
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="error"] + .sf-badge[data-tone="pending"] + .sf-badge[data-tone="pending"] {
+	left: 64px;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="neutral"] + .sf-badge:is([data-tone="neutral"], [data-tone="info"], [data-tone="muted"]),
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="accent"] + .sf-badge:is([data-tone="accent"], [data-tone="info"], [data-tone="muted"]),
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="pending"] + .sf-badge[data-tone="pending"],
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="error"] + .sf-badge[data-tone="error"] {
+	min-width: 0;
+	padding: 0 0 0 5px;
+	border-radius: 5px 0 0 5px;
+	font-weight: 400;
+	box-shadow: none;
+	z-index: 4;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="neutral"] + .sf-badge[data-tone="neutral"],
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="accent"] + .sf-badge[data-tone="accent"] {
+	left: -32px;
+	right: auto;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge:is([data-tone="neutral"], [data-tone="accent"]) + .sf-badge[data-tone="info"] {
+	left: -37px;
+	right: auto;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge:is([data-tone="neutral"], [data-tone="accent"]) + .sf-badge[data-tone="muted"] {
+	left: -43px;
+	right: auto;
+}
+[data-role="omp.vimnav.at"][aria-label*=" hint"] + .sf-tool .sf-tool-line > .sf-badge[data-tone="accent"] + .sf-badge:is([data-tone="info"], [data-tone="muted"]) {
+	background: var(--vn-rail);
+	color: var(--tv-bg);
+}
+
+/* Status chip: composer facts sit in the dock and inherit its local palette.
+   The segment's text wrapper normally clips to an ellipsis; let the pill's ring and dot remain visible. */
+.sf-region.sf-dock .sf-seg[data-role="omp.vimnav.status"] {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	letter-spacing: 0;
+}
+.sf-region.sf-dock .sf-seg[data-role="omp.vimnav.status"] .sf-seg-t {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	overflow: visible;
+	text-overflow: clip;
+}
+.sf-region.sf-dock .sf-seg[data-role="omp.vimnav.status"] .sf-t-strong {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 20px;
+	padding: 0 8px 0 7px;
+	border-radius: 999px;
+	font: 600 11px/1 var(--sans);
+	letter-spacing: 0.02em;
+	color: color-mix(in oklab, var(--vn-accent) 50%, var(--t1));
+	background: color-mix(in srgb, var(--vn-accent) 10%, transparent);
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vn-accent) 24%, transparent);
+	white-space: nowrap;
+	flex: none;
+}
+[data-theme="dark"] .sf-region.sf-dock .sf-seg[data-role="omp.vimnav.status"] .sf-t-strong {
+	color: color-mix(in oklab, var(--vn-accent) 70%, var(--t1));
+}
+.sf-region.sf-dock .sf-seg[data-role="omp.vimnav.status"] .sf-t-strong::before {
+	content: "";
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background: var(--vn-accent);
+	flex: none;
+}
+.sf-region.sf-dock .sf-seg[data-role="omp.vimnav.status"] .sf-t-mono {
+	font: 11.5px/1 var(--mono);
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0;
+	color: var(--t3);
+	white-space: nowrap;
+}
+
+/* Key sheet. Tern supplies the glass card; override only its measure and body padding. */
+[data-role="omp.overlay.vimnav-help"] .sf-ov-card {
+	width: min(700px, 100%) !important;
+	max-width: 700px;
+	overflow: hidden;
+}
+[data-role="omp.overlay.vimnav-help"] .sf-ov-body {
+	padding: 0;
+	gap: 0;
+	overflow: hidden;
+}
+[data-role="omp.vimnav.help"] {
+	flex: 1 1 auto !important;
+	min-height: 0;
+	max-height: 640px;
+	gap: 0 !important;
+	overflow: hidden;
+}
+[data-role="omp.vimnav.help-head"] {
+	display: flex;
+	flex: none !important;
+	flex-wrap: wrap;
+	gap: 10px !important;
+	padding: 14px 18px;
+	box-shadow: inset 0 -1px 0 var(--l1);
+}
+[data-role="omp.vimnav.help-head"] .sf-icon {
+	width: 16px;
+	height: 16px;
+	color: var(--t3);
+}
+[data-role="omp.vimnav.help-title"] {
+	font: 550 14px/20px var(--sans);
+	letter-spacing: -0.012em;
+	color: var(--t1);
+}
+[data-role="omp.vimnav.help-count"] {
+	margin-left: auto;
+	font: 12px/20px var(--mono);
+	font-variant-numeric: tabular-nums;
+	color: var(--t3);
+}
+[data-role="omp.vimnav.help-search"] {
+	display: flex;
+	align-items: center !important;
+	flex: 0 0 100% !important;
+	gap: 2px !important;
+	min-width: 0;
+	height: 38px;
+	padding: 0 12px;
+	border-radius: 8px;
+	background: var(--tv-bg);
+	box-shadow: inset 0 0 0 1px var(--l2);
+	font: 14px/1 var(--sans);
+	color: var(--t1);
+	overflow: hidden;
+}
+[data-role="omp.vimnav.help-search"] .sf-t-muted {
+	color: var(--t3);
+}
+[data-role="omp.vimnav.help-caret"] {
+	flex: none !important;
+	width: 1px;
+	height: 17px;
+	background: color-mix(in oklab, var(--vn-accent) 50%, var(--t1));
+}
+[data-role="omp.vimnav.help-body"] {
+	display: flex;
+	flex: 1 1 auto !important;
+	align-items: flex-start !important;
+	gap: 20px 16px !important;
+	padding: 18px;
+	min-height: 0;
+	overflow: auto;
+	scrollbar-color: var(--l3) transparent;
+	scrollbar-width: thin;
+}
+[data-role="omp.vimnav.help-column"] {
+	flex: 1 1 0 !important;
+	min-width: 0;
+	gap: 20px !important;
+}
+[data-role="omp.vimnav.help-group"] {
+	min-width: 0;
+	gap: 0 !important;
+}
+[data-role="omp.vimnav.help-group-head"] {
+	align-items: center !important;
+	gap: 8px !important;
+	margin-bottom: 8px;
+}
+[data-role^="omp.vimnav.help-group-title"] {
+	font: 600 12px/18px var(--sans);
+	color: var(--t2);
+}
+[data-role="omp.vimnav.help-group-title.now"],
+[data-role="omp.vimnav.help-now"] {
+	color: color-mix(in oklab, var(--vn-accent) 50%, var(--t1));
+}
+[data-role="omp.vimnav.help-now"] {
+	padding: 1px 5px;
+	border-radius: 4px;
+	background: var(--vn-wash-strong);
+	font: 550 10px/16px var(--sans);
+}
+[data-role="omp.vimnav.help-row"] {
+	display: grid;
+	grid-template-columns: 72px minmax(0, 1fr);
+	align-items: start !important;
+	gap: 6px !important;
+	min-height: 28px;
+	padding: 4px 0;
+	color: var(--t2);
+	font: 11.5px/16px var(--sans);
+}
+[data-role="omp.vimnav.help-keys"] {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 2px !important;
+	min-width: 0;
+}
+[data-role="omp.vimnav.key"] {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none !important;
+	min-width: 18px;
+	height: 18px;
+	padding: 0 4px;
+	border-radius: 5px;
+	font: 500 11px/1 var(--mono);
+	letter-spacing: 0;
+	text-transform: none;
+	color: var(--t1);
+	background: var(--l1);
+	box-shadow: inset 0 0 0 1px var(--l2), inset 0 -1px 0 var(--l1);
+	white-space: nowrap;
+}
+[data-role="omp.vimnav.help-label"] {
+	min-width: 0;
+	white-space: normal;
+}
+[data-role="omp.vimnav.help"] .sf-t-mark {
+	padding: 0;
+	border-radius: 2px;
+	background: color-mix(in srgb, var(--vn-accent) 16%, transparent);
+	color: color-mix(in oklab, var(--vn-accent) 50%, var(--t1));
+}
+[data-theme="dark"] [data-role="omp.vimnav.help-group-title.now"],
+[data-theme="dark"] [data-role="omp.vimnav.help-now"],
+[data-theme="dark"] [data-role="omp.vimnav.help"] .sf-t-mark {
+	color: color-mix(in oklab, var(--vn-accent) 70%, var(--t1));
+}
+[data-theme="dark"] [data-role="omp.vimnav.help-caret"] {
+	background: color-mix(in oklab, var(--vn-accent) 70%, var(--t1));
+}
+[data-role="omp.vimnav.help-foot"] {
+	flex: none !important;
+	padding: 12px 18px;
+	box-shadow: inset 0 1px 0 var(--l1);
+	font: 12px/18px var(--sans);
+	color: var(--t3);
+}
+
+/* Search never paints inside omp's blocks: every change there rebuilds a finished block, which Tern can then draw
+   blank or lose the scroll over. Matches show in the TEXT well, vimnav's own node, with palette backgrounds
+   14 = match, 15 = current. The native find overlay lives in the layer region; the navigator retains keyboard
+   ownership while it is open. */
+[data-role="omp.vimnav.well"] {
+	--ansi14: color-mix(in srgb, rgb(245 177 61) 35%, var(--code-bg));
+	--ansi15: color-mix(in srgb, rgb(245 177 61) 60%, var(--code-bg));
+}
+/* Accent near amber (vimnav adds `fv`, a hue test on omp's accent): matches use Tern's violet, which never reads as
+   the cursor. Tern's --live is #a86af4 in both appearances, but omp's palette redefines --live inside its regions
+   (light-retro: #af5f00), so the violet is spelled out, like the find amber. */
+[data-role="omp.vimnav.text"][aria-label*=" fv"] [data-role="omp.vimnav.well"] {
+	--ansi14: color-mix(in srgb, rgb(168 106 244) 35%, var(--code-bg));
+	--ansi15: color-mix(in srgb, rgb(168 106 244) 60%, var(--code-bg));
+}
+.sf-overlay[data-role="omp.vimnav.find"] {
+	left: auto;
+	right: 16px;
+	transform: none;
+	padding-left: 0;
+	padding-right: 0;
+}
+[data-role="omp.vimnav.find"] .sf-ov-card {
+	width: auto !important;
+	max-width: 100%;
+	border-radius: 12px;
+	background: light-dark(rgb(from var(--pop-bg) r g b / 64%), rgb(from var(--pop-bg) r g b / 76%));
+	backdrop-filter: blur(2px) saturate(180%);
+	box-shadow: 0 0 0 1px var(--l2), 0 16px 40px -18px rgb(0 0 0 / 35%), inset 0 1px 0 var(--glass-hi);
+}
+/* Tern makes --pop-bg opaque under reduced transparency; keep it that way instead of mixing in fresh alpha. */
+@media (prefers-reduced-transparency: reduce) {
+	[data-role="omp.vimnav.find"] .sf-ov-card {
+		background: var(--pop-bg);
+		backdrop-filter: none;
+	}
+}
+[data-role="omp.vimnav.find"] .sf-ov-body {
+	padding: 0 !important;
+}
+[data-role="omp.vimnav.find-bar"] {
+	height: 38px;
+	gap: 4px !important;
+	padding: 0 4px 0 11px;
+}
+[data-role="omp.vimnav.find-bar"] > .sf-icon {
+	width: 14px;
+	height: 14px;
+	color: var(--t3);
+	flex: none !important;
+}
+[data-role="omp.vimnav.find-q"] {
+	width: 200px;
+	min-width: 0;
+	padding: 0 4px;
+	overflow: hidden;
+	white-space: nowrap;
+	font: 14px/20px var(--sans);
+	color: var(--t1);
+}
+[data-role="omp.vimnav.find-caret"] {
+	width: 1px;
+	height: 16px;
+	flex: none !important;
+	background: var(--t1);
+}
+[data-role^="omp.vimnav.find-n"] {
+	min-width: 72px;
+	padding-right: 4px;
+	text-align: right;
+	font: 11.5px/18px var(--mono);
+	color: var(--t3);
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
+[data-role="omp.vimnav.find-n.none"] {
+	color: var(--bad);
+}
+[data-role="omp.vimnav.find-btn"] {
+	width: 26px;
+	height: 26px;
+	flex: none !important;
+	align-items: center !important;
+	justify-content: center !important;
+	border-radius: 7px;
+	color: var(--t3);
+	cursor: pointer;
+}
+[data-role="omp.vimnav.find-btn"]:hover {
+	background: var(--l1);
+	color: var(--t1);
+}
+[data-role="omp.vimnav.find-btn"] .sf-icon {
+	width: 13px;
+	height: 13px;
+}
