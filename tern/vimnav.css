@@ -765,3 +765,13 @@
 	width: 13px;
 	height: 13px;
 }
+
+/* Fullscreen navigator (`omp.rewind` page): keep focus anchor invisible and ensure TEXT wells
+   sit cleanly inside the centered reading column without bleeding past its edges. */
+[data-role="omp.vimnav.focus"] {
+	display: none !important;
+}
+[data-role="omp.vimnav.text"]::before,
+[data-role="omp.vimnav.text"]::after {
+	display: none !important;
+}

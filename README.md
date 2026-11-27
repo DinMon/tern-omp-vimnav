@@ -23,9 +23,8 @@ nothing.
 
 ## Requirements
 
-- omp 18.6 or later (tested with 18.6.1)
-- Tern 0.4 or later (tested with 0.4.5), with omp running directly in a Tern pane, not inside tmux, zellij or another
-  multiplexer
+- omp 19.2 or later (tested with 19.2.1)
+- Tern 0.9 or later (tested with 0.9.36) for full native rendering (also includes a plain-terminal fallback)
 
 ## Install
 
@@ -51,7 +50,7 @@ The choice is saved in `~/.omp/agent/vimnav.json`. While vimnav is on, Tern's pr
 
 | Key | Does |
 | --- | --- |
-| Alt+K, or `/vimnav` | open the navigator; Alt+K again switches between it and the prompt |
+| Esc Esc (in prompt), Alt+K, or `/vimnav` | open the navigator; Alt+K or `i` returns to the prompt (remembering your cursor position) |
 | `j` `k`, `gg` `G` | next / previous block, first / last |
 | `]]` `[[`, `]t` `[t` | your prompts, tool blocks |
 | Ctrl+D Ctrl+U, Ctrl+F Ctrl+B | 5 blocks, 10 blocks |
@@ -91,12 +90,7 @@ tern plugin remove vimnav   # or: tern plugin unlink vimnav
 
 ## How it works
 
-omp describes each transcript block to Tern as a native node tree, and rebuilds a finished block from scratch whenever
-its description changes, which Tern can draw as an empty gap. vimnav therefore never rewrites omp's blocks. It
-overrides the transcript's block list to add invisible marker nodes next to them, and the stylesheet draws the cursor,
-range and scroll margins through those markers. The TEXT view is vimnav's own node, placed next to the block it shows,
-which is kept laid out at zero height so Tern keeps its content mounted. Hint labels are the one change made inside
-blocks, and only while hints are up.
+vimnav reads the active session branch (`ctx.sessionManager.getBranch()`) and opens a fullscreen native Tern surface (`ctx.ui.custom(..., { overlay: true, fullscreen: true })` with `page: { role: "omp.rewind", dock: 1 }`) using omp's reactive `@oh-my-pi/pi-tui` engine — matching Tern-omp's native Rewind layout (centered reading column, accent selection rail, caption line, and floating pill dock bar). The companion Tern stylesheet (`tern/vimnav.css`) styles the TEXT code well, hint tags, find bar, and key sheet. Outside Tern, vimnav falls back to a viewport-scrolled terminal view.
 
 ## License
 

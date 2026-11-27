@@ -27,7 +27,12 @@ tern.override("open_scrollback", function(cx: WindowCx): boolean
 	-- into a terminal and keeps the built-in.
 	local info = cx.session:pane(pane)
 	local tree = cx.session:surface(pane, { nodes = 1, depth = 1 })
-	if not info or info.kind ~= "agent" or typeof(tree) ~= "table" or tree.surface.title ~= "omp" then
+	if
+		not info
+		or info.kind ~= "agent"
+		or typeof(tree) ~= "table"
+		or (tree.surface.title ~= "omp" and tree.surface.role ~= "omp.session")
+	then
 		return false
 	end
 	return open(cx)
